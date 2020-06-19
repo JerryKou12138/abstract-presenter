@@ -1,70 +1,60 @@
 <template>
-  <div id="app">
-    <img alt="Vue logo" src="./assets/logo.png">
-    <!-- <HelloWorld msg="Welcome to Your Vue.js App"/> -->
-    <div class="container">
-            <div class="container">
-              <section class="py-5">
-                  <div class="row mt-5">
-                      <div class="col-8 offset-2">
-                          <vue-csv-import 
-                            v-model="csv" 
-                            autoMatchFields = "true"
-                            :map-fields="['file', 'book', 'conference', 'DO', 'TY',
-                             'TI', 'T2','SP', 'EP', 'PY', 'JO', 'IS', 'SN', 'VO',
-                              'VL', 'JA', 'Y1', 'PB','UR', 'AU', 'KW', 'AB']">
-                            </vue-csv-import>
-                          <div class="mt-2">
-                            {{ csv }}
-                          </div>
-                      </div>
-                  </div>
-              </section>
-            </div>
-        </div>
-  </div>
+  <v-app>
+    <v-app-bar
+      app
+      color="primary"
+      dark
+    >
+      <div class="d-flex align-center">
+        <v-img
+          alt="Vuetify Logo"
+          class="shrink mr-2"
+          contain
+          src="https://cdn.vuetifyjs.com/images/logos/vuetify-logo-dark.png"
+          transition="scale-transition"
+          width="40"
+        />
+
+        <v-img
+          alt="Vuetify Name"
+          class="shrink mt-1 hidden-sm-and-down"
+          contain
+          min-width="100"
+          src="https://cdn.vuetifyjs.com/images/logos/vuetify-name-dark.png"
+          width="100"
+        />
+      </div>
+
+      <v-spacer></v-spacer>
+
+      <v-btn
+        href="https://github.com/vuetifyjs/vuetify/releases/latest"
+        target="_blank"
+        text
+      >
+        <span class="mr-2">Latest Release</span>
+        <v-icon>mdi-open-in-new</v-icon>
+      </v-btn>
+    </v-app-bar>
+
+    <v-content>
+      <HelloWorld/>
+    </v-content>
+  </v-app>
 </template>
 
 <script>
-// import HelloWorld from './components/HelloWorld.vue'
-import VueCsvImport from 'vue-csv-import';
+import HelloWorld from './components/HelloWorld';
 
 export default {
   name: 'App',
-  data() {
-    return {
-      csv: null,
-    }
-  },
+
   components: {
-    // HelloWorld,
-    VueCsvImport
-  }
-}
+    HelloWorld,
+  },
+
+  data: () => ({
+    //
+  }),
+};
 </script>
-
-<style>
-    #app {
-        font-family: "Avenir", Helvetica, Arial, sans-serif;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-        text-align: center;
-        color: #2c3e50;
-        margin-top: 60px;
-    }
-
-    .container {
-        text-align: left;
-    }
-
-    pre code {
-        background-color: #eee;
-        border: 1px solid #999;
-        display: block;
-        padding: 20px;
-    }
-
-    #app .form {
-        text-align: left;
-    }
-</style>

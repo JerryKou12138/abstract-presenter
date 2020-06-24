@@ -3,13 +3,26 @@
     <div class="row mt-5">
       <div class="col-8 offset-2">
         <FileImport @inputCSV="assignCSV" @inputHeader="assignHeader"></FileImport>
-        <v-data-table
-          v-if="tableData != null"
-          :headers="headerData"
-          :items="tableData"
-          :item-per-page="5"
-          class="elevation-1"
-        ></v-data-table>
+        <v-card v-if="tableData != null">
+          <v-card-title>
+            Abstract
+            <v-spacer></v-spacer>
+            <v-text-field
+              v-model="search"
+              append-icon="mdi-magnify"
+              label="Search"
+              single-line
+              hide-details
+            ></v-text-field>
+          </v-card-title>
+            <v-data-table
+              :headers="headerData"
+              :items="tableData"
+              :item-per-page="5"
+              :search="search"
+              class="elevation-1"
+            ></v-data-table>
+        </v-card>
       </div>
     </div>
   </v-app>
@@ -30,7 +43,8 @@ export default {
   data() {
     return {
       tableData: null,
-      headerData: null
+      headerData: null,
+      search: ''
       }
   },
 

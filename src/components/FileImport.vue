@@ -99,7 +99,7 @@
                 let headerArray = this.headers;
                 this.headers = [
                     {
-                        text: 'Abstract Summary',
+                        text: 'File',
                         align: 'start',
                         sortable: false,
                         value: headerArray[0]

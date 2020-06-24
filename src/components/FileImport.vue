@@ -76,7 +76,8 @@
                     }
                     this.csvToObject();
                     this.headerToObject();
-                    _this.$emit('input', _this.csv);
+                    _this.$emit('inputCSV', _this.csv);
+                    _this.$emit('inputHeader', _this.headers);
                 });
             },
             readFile(callback) {

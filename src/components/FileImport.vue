@@ -37,12 +37,21 @@
                     return ["text/csv", "text/x-csv", "application/vnd.ms-excel", "text/plain"];
                 }
             },
+            presentedFields: {
+                type: Array,
+                default: () => {
+                    return ["DO", "TY", "TI", "Y1"];
+                }
+            },
         },
 
         data: () => ({
             hasHeaders: true,
             headers: null,
+            headerIndex: null,
+            detailedHeader: null,
             csv: null,
+            detailedInfo: null,
             isValidFileMimeType: false,
             fileSelected: false,
         }),
@@ -74,10 +83,12 @@
                         _this.headers = _this.csv[0];
                         _this.csv.shift();
                     }
-                    this.csvToObject();
                     this.headerToObject();
+                    this.csvToObject();
                     _this.$emit('inputCSV', _this.csv);
                     _this.$emit('inputHeader', _this.headers);
+                    _this.$emit('detailedInput', _this.detailedInfo);
+                    _this.$emit('detailedHeader', _this.detailedHeader);
                 });
             },
             readFile(callback) {
@@ -97,34 +108,54 @@
             },
             headerToObject() {
                 let headerArray = this.headers;
-                this.headers = [
-                    {
-                        text: 'File',
-                        align: 'start',
-                        sortable: false,
-                        value: headerArray[0]
+                this.headers = [];
+                this.headerIndex = [];
+                this.detailedHeader = [];
+                for (let i = 0; i < headerArray.length; i++) {
+                    if (this.presentedFields.indexOf(headerArray[i]) > -1) {
+                        this.headers.push(
+                            {
+                                text: headerArray[i],
+                                align: 'center',
+                                sortable: false,
+                                value: headerArray[i]
+                            }
+                        );
+                        this.headerIndex.push(i);
                     }
-                ];
-                for (let i = 1; i < headerArray.length; i++) {
-                    this.headers.push(
-                        {
-                            text: headerArray[i],
-                            value: headerArray[i]
-                        }
-                    );
+                    this.detailedHeader.push(headerArray[i]);
                 }
             },
             csvToObject() {
                 let csvArray = this.csv;
-                let headerSize = this.headers.length;
                 this.csv = [];
+                this.detailedInfo = [];
                 for (let i = 0; i < csvArray.length; i++) {
                     let entry = {};
-                    for (let j = 0; j < headerSize; j++) {
-                        entry[this.headers[j]] = csvArray[i][j];
+                    let detail = {};
+                    for (let j = 0; j < csvArray[i].length; j++) {
+                        if (this.detailedHeader[j] == 'KW' || this.detailedHeader[j] == 'AU') {
+                            csvArray[i][j] = this.trimString(csvArray[i][j].toString());
+                        }
+                        let index = this.headerIndex.indexOf(j);
+                        if (index > -1) {
+                            entry[this.headers[index].value] = csvArray[i][j];
+                        }
+                        detail[this.detailedHeader[j]] = csvArray[i][j];
                     }
                     this.csv.push(entry);
+                    this.detailedInfo.push(detail);
                 }
+            },
+            trimString(oldString) {
+                let newString = oldString.replace('[', '');
+                newString = newString.replace(']', '');
+                newString = newString.replace(/"/g, '');
+                newString = newString.replace(/'/g, '');
+                if (newString == '') {
+                    newString = 'None';
+                }
+                return newString;
             }
         },
 

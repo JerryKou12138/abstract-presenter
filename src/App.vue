@@ -5,7 +5,8 @@
         <FileImport 
           @inputCSV="assignCSV"
           @inputHeader="assignHeader"
-          @detailedInput="assignDetailedInfo"></FileImport>
+          @detailedInput="assignDetailedInfo"
+          :searchIndex="index"></FileImport>
         <v-card v-if="tableData != null">
           <v-card-title>
             Abstract
@@ -13,7 +14,7 @@
             <v-text-field
               v-model="search"
               append-icon="mdi-magnify"
-              label="Search"
+              label="Search in Abstracts"
               single-line
               hide-details
             ></v-text-field>
@@ -25,10 +26,12 @@
               item-key="DO"
               :item-per-page="5"
               :search="search"
+              :custom-filter="customFilter"
               show-select
               class="elevation-1"
               @input="update"
-            ></v-data-table>
+            >
+            </v-data-table>
         </v-card>
         <div class="container">
           <div class="row">
@@ -50,8 +53,7 @@
                   <p class="h6 text--primary">
                     Abstract:
                   </p>
-                  <p class="text--primary">
-                    {{ card1Data.AB }}
+                  <p class="text--primary" v-html="highlight(card1Data.AB)">
                   </p>
                 </v-card-text>
                 <v-card-actions>
@@ -83,8 +85,7 @@
                   <p class="h6 text--primary">
                     Abstract:
                   </p>
-                  <p class="text--primary">
-                    {{ card2Data.AB }}
+                  <p class="text--primary" v-html="highlight(card2Data.AB)">
                   </p>
                 </v-card-text>
                 <v-card-actions>
@@ -106,7 +107,6 @@
 </template>
 
 <script>
-// import HelloWorld from './components/HelloWorld';
 import FileImport from './components/FileImport';
 import lunr from 'lunr';
 
@@ -114,7 +114,6 @@ export default {
   name: 'App',
 
   components: {
-    // HelloWorld,
     FileImport
   },
 
@@ -149,6 +148,7 @@ export default {
       this.index = lunr(function () {
         this.ref('id');
         this.field('DO');
+        this.field('AB');
 
         documents.forEach(function (doc) {
           this.add(doc);
@@ -178,8 +178,45 @@ export default {
     },
     goToEvents(url) {
       window.open(url);
+    },
+    customFilter(value, search, item) {
+      this.selected = [];
+      this.card1Data = null;
+      this.card2Data = null;
+      let doi = item.DO;
+      let result = this.index.search(search);
+
+      let reference = this.index.search(doi);
+      reference = reference[0].ref;
+
+      for (let i = 0; i < result.length; i++) {
+        if (result[i].ref == reference) {
+          return value != null &&
+            search != null &&
+            typeof value === 'string';
+        }
+      }
+      return false;
+    },
+    highlight(text) {
+      let idx = text.indexOf(this.search);
+      let ans = '';
+      while (this.search != '' && idx >= 0) {
+        ans = ans + text.substring(0, idx) + "<span class='highlight'>"
+         + text.substring(idx, idx + this.search.length)
+         + "</span>";
+        text = text.substring(idx + this.search.length);
+        idx = text.indexOf(this.search);
+      }
+      ans = ans + text;
+      return ans;
     }
   },
-
 };
 </script>
+
+<style>
+  .highlight {
+    background-color: yellow;
+  }
+</style>

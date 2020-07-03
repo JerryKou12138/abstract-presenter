@@ -156,7 +156,7 @@
                     newString = 'None';
                 }
                 return newString;
-            }
+            },
         },
 
         computed: {

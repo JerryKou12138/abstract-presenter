@@ -31,6 +31,61 @@
               class="elevation-1"
               @input="update"
             >
+              <!-- <template v-slot:top>
+                <div class="text-right mr-4">
+                  <v-menu
+                    v-model="menu"
+                    :close-on-content-click="false"
+                    :nudge-width="200"
+                    offset-x
+                  >
+                    <template v-slot:activator="{ on, attrs }">
+                      <v-btn
+                        fab dark small
+                        color="#c8cbcf"
+                        v-bind="attrs"
+                        v-on="on"
+                      >
+                        <v-icon dark>mdi-format-list-bulleted-square</v-icon>
+                      </v-btn>
+                    </template>
+
+                    <v-card>
+                      <v-list>
+                        <v-list-item>
+                          <v-list-item-title>Search Your Text in</v-list-item-title>
+                        </v-list-item>
+                      </v-list>
+
+                      <v-divider></v-divider>
+
+                      <div class="ml-4">
+                        <v-form>
+                          <v-checkbox v-model="searchFields"
+                            value="AB"
+                            label="Abstracts"
+                            hide-details
+                            :rules="rules"
+                            ></v-checkbox>
+                          <v-checkbox
+                            v-model="searchFields"
+                            value="KW"
+                            label="Key Words"
+                            hide-details
+                            :rules="rules"
+                            ></v-checkbox>
+                          <v-checkbox
+                            v-model="searchFields"
+                            value="TI"
+                            label="Titles"
+                            :rules="rules"
+                            ></v-checkbox>
+                        </v-form>
+                      </div>
+                    </v-card>
+                  </v-menu>
+                </div>
+              </template> -->
             </v-data-table>
         </v-card>
         <div class="container">
@@ -122,12 +177,17 @@ export default {
       index: null,
       tableData: null,
       detailedInfo: null,
+      finishLoading: false,
       headerData: null,
       search: '',
+      searchResult: [],
+      awaitingSearch: false,
+      menu: false,
       selected: [],
       card1Data: null,
       card2Data: null,
-      cardClass: "col-12 mt-5"
+      cardClass: "col-12 mt-5",
+      searchFields: ["AB"],
     }
   },
 
@@ -140,19 +200,44 @@ export default {
     },
     assignDetailedInfo(e) {
       this.detailedInfo = e;
-      let documents = e;
-      let counter = 0;
-      documents.forEach(function (doc) {
-        doc['id'] = counter++;
-      });
+      // for (let i = 0; i < documents.length; i++) {
+      //   documents[i]['id'] = i;
+      //   // ['AU', 'EP', 'IS', 'JA', 'JO', 'KW', 
+      //   //   'PB', 'PY', 'SN', 'SP', 'T2', 'TI',
+      //   //   'TY', 'UR', 'VL', 'VO', 'Y1', 'book',
+      //   //   'conference', 'file'].forEach(e => delete doc[e]);
+      // }
+
       this.index = lunr(function () {
         this.ref('id');
         this.field('DO');
         this.field('AB');
+      });
+      this.finishLoading = true;
+      console.log("here")
+      // this.index = lunr(function () {
+      //   this.ref('id');
+      //   this.field('DO');
+      //   this.field('AB');
+      //   this.field('TI');
+      //   this.field('KW');
 
-        documents.forEach(function (doc) {
-          this.add(doc);
-        }, this)
+      //   for (let i = 0; i < documents.length; i++) {
+      //     this.add(documents[i]);
+      //   }
+      // });
+    },
+    buildIndex(documents) {
+      this.index = lunr(function () {
+        this.ref('id');
+        this.field('DO');
+        this.field('AB');
+        this.field('TI');
+        this.field('KW');
+
+        for (let i = 0; i < documents.length; i++) {
+          this.add(documents[i]);
+        }
       });
     },
     update() {
@@ -183,40 +268,73 @@ export default {
       this.selected = [];
       this.card1Data = null;
       this.card2Data = null;
-      let doi = item.DO;
-      let result = this.index.search(search);
+      let id = item.id.toString();
 
-      let reference = this.index.search(doi);
-      reference = reference[0].ref;
-
-      for (let i = 0; i < result.length; i++) {
-        if (result[i].ref == reference) {
-          return value != null &&
-            search != null &&
-            typeof value === 'string';
-        }
+      if (this.searchResult.indexOf(id) > -1) {
+        return value != null &&
+          search != null &&
+          typeof value === 'string';
       }
       return false;
     },
     highlight(text) {
-      let idx = text.indexOf(this.search);
+      let idx = text.toLowerCase().indexOf(this.search.toLowerCase());
       let ans = '';
       while (this.search != '' && idx >= 0) {
         ans = ans + text.substring(0, idx) + "<span class='highlight'>"
          + text.substring(idx, idx + this.search.length)
          + "</span>";
         text = text.substring(idx + this.search.length);
-        idx = text.indexOf(this.search);
+        idx = text.toLowerCase().indexOf(this.search.toLowerCase());
       }
       ans = ans + text;
       return ans;
+    },
+
+  },
+  computed: {
+    rules() {
+      return [
+        this.searchFields.length > 0 || "At least one field should be selected"
+      ];
     }
   },
+
+  watch: {
+    search: function () {
+      let temp = [];
+      if (!this.awaitingSearch) {
+        setTimeout(() => {
+          if (this.search != '') {
+            this.searchResult = this.index.search(this.search);
+          } else {
+            this.searchResult = [];
+          }
+          temp = [];
+          for (let i = 0; i < this.searchResult.length; i++) {
+            temp[i] = this.searchResult[i].ref;
+          }
+          this.searchResult = temp;
+          this.awaitingSearch = false;
+        }, 2000);
+      }
+      this.awaitingSearch = true;
+    },
+    finishLoading: function () {
+      if (this.finishLoading) {
+        this.buildIndex(this.detailedInfo);
+        this.finishLoading = false;
+      }
+    }
+  }
 };
 </script>
 
 <style>
   .highlight {
     background-color: yellow;
+  }
+  .v-btn.focus {
+    box-shadow: none;
   }
 </style>

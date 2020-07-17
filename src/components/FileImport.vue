@@ -17,9 +17,11 @@
             </div>
         </div>
         <div class="form-group">
-            <button type="submit" :disabled="disabledSubmitButton" class="btn btn-primary" @click.prevent="load">
-                submit
-            </button>
+            <div class="my-4">
+                <v-btn color="primary" :disabled="disabledSubmitButton" @click.prevent="load">
+                    Submit
+                </v-btn>    
+            </div>
         </div>
     </div>
 </template>
@@ -113,14 +115,17 @@
                 this.detailedHeader = [];
                 for (let i = 0; i < headerArray.length; i++) {
                     if (this.presentedFields.indexOf(headerArray[i]) > -1) {
-                        this.headers.push(
-                            {
-                                text: headerArray[i],
-                                align: 'center',
-                                sortable: false,
-                                value: headerArray[i]
-                            }
-                        );
+                        let header = {
+                            text: headerArray[i],
+                            align: 'center',
+                            sortable: false,
+                            filterable: false,
+                            value: headerArray[i]
+                        };
+                        if (headerArray[i] == 'DO') {
+                            header.filterable = true;
+                        }
+                        this.headers.push(header);
                         this.headerIndex.push(i);
                     }
                     this.detailedHeader.push(headerArray[i]);
@@ -146,6 +151,22 @@
                     this.csv.push(entry);
                     this.detailedInfo.push(detail);
                 }
+                this.csv = this.csv.reduce((unique, o) => {
+                    if (!unique.some(obj => obj.DO === o.DO)) {
+                        unique.push(o);
+                    }
+                    return unique;
+                },[]);
+                this.detailedInfo = this.detailedInfo.reduce((unique, o) => {
+                    if (!unique.some(obj => obj.DO === o.DO)) {
+                        unique.push(o);
+                    }
+                    return unique;
+                },[]);
+                for (let i = 0; i < this.csv.length; i++) {
+                    this.csv[i]['id'] = i;
+                    this.detailedInfo[i]['id'] = i;
+                }
             },
             trimString(oldString) {
                 let newString = oldString.replace('[', '');
@@ -156,7 +177,7 @@
                     newString = 'None';
                 }
                 return newString;
-            },
+            }
         },
 
         computed: {

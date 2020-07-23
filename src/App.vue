@@ -2,11 +2,12 @@
   <v-app>
     <div class="row mt-5">
       <div class="col-8 offset-2">
-        <FileImport 
+        <!-- <FileImport 
           @inputCSV="assignCSV"
           @inputHeader="assignHeader"
           @detailedInput="assignDetailedInfo"
-          :searchIndex="index"></FileImport>
+          :searchIndex="index"></FileImport> -->
+        <v-file-input ref="idx" name="idx" label="File input" @change="selectFile"></v-file-input>
         <v-card v-if="tableData != null">
           <v-card-title>
             Abstract
@@ -14,7 +15,7 @@
             <v-text-field
               v-model="search"
               append-icon="mdi-magnify"
-              label="Search in Abstracts"
+              label="Search in Abstracts, Titles, and Key Words"
               single-line
               hide-details
             ></v-text-field>
@@ -162,23 +163,27 @@
 </template>
 
 <script>
-import FileImport from './components/FileImport';
+// import FileImport from './components/FileImport';
 import lunr from 'lunr';
+import data from '../data.json';
+import fullData from '../fullData.json'
+import headers from '../headers.json'
+// import $ from 'jquery'
+// import preidx from '../index.json'
 
 export default {
   name: 'App',
 
-  components: {
-    FileImport
-  },
+  // components: {
+  //   FileImport
+  // },
 
   data() {
     return {
       index: null,
-      tableData: null,
-      detailedInfo: null,
-      finishLoading: false,
-      headerData: null,
+      tableData: data,
+      detailedInfo: fullData,
+      headerData: headers,
       search: '',
       searchResult: [],
       awaitingSearch: false,
@@ -200,21 +205,12 @@ export default {
     },
     assignDetailedInfo(e) {
       this.detailedInfo = e;
-      // for (let i = 0; i < documents.length; i++) {
-      //   documents[i]['id'] = i;
-      //   // ['AU', 'EP', 'IS', 'JA', 'JO', 'KW', 
-      //   //   'PB', 'PY', 'SN', 'SP', 'T2', 'TI',
-      //   //   'TY', 'UR', 'VL', 'VO', 'Y1', 'book',
-      //   //   'conference', 'file'].forEach(e => delete doc[e]);
-      // }
 
       this.index = lunr(function () {
         this.ref('id');
         this.field('DO');
         this.field('AB');
       });
-      this.finishLoading = true;
-      console.log("here")
       // this.index = lunr(function () {
       //   this.ref('id');
       //   this.field('DO');
@@ -227,39 +223,26 @@ export default {
       //   }
       // });
     },
-    buildIndex(documents) {
-      this.index = lunr(function () {
-        this.ref('id');
-        this.field('DO');
-        this.field('AB');
-        this.field('TI');
-        this.field('KW');
-
-        for (let i = 0; i < documents.length; i++) {
-          this.add(documents[i]);
-        }
-      });
-    },
     update() {
-      if (this.selected.length > 2) {
-        this.selected.shift();
-      } else if (this.selected.length > 0) {
-        let doi = this.selected[0].DO;
-        let result = this.index.search(doi);
-        this.card1Data = this.detailedInfo[parseInt(result[0].ref)];
-        if (this.selected.length > 1) {
-            doi = this.selected[1].DO;
-            result = this.index.search(doi);
-            this.card2Data = this.detailedInfo[parseInt(result[0].ref)];
-            this.cardClass = "col-6 mt-5";
-        } else {
-          this.card2Data = null;
-          this.cardClass = "col-12 mt-5";
-        }
-      } else {
-        this.card1Data = null;
-        this.card2Data = null;
-      }
+      // if (this.selected.length > 2) {
+      //   this.selected.shift();
+      // } else if (this.selected.length > 0) {
+      //   let doi = this.selected[0].DO;
+      //   let result = this.index.search(doi);
+      //   this.card1Data = this.detailedInfo[parseInt(result[0].ref)];
+      //   if (this.selected.length > 1) {
+      //       doi = this.selected[1].DO;
+      //       result = this.index.search(doi);
+      //       this.card2Data = this.detailedInfo[parseInt(result[0].ref)];
+      //       this.cardClass = "col-6 mt-5";
+      //   } else {
+      //     this.card2Data = null;
+      //     this.cardClass = "col-12 mt-5";
+      //   }
+      // } else {
+      //   this.card1Data = null;
+      //   this.card2Data = null;
+      // }
     },
     goToEvents(url) {
       window.open(url);
@@ -290,7 +273,32 @@ export default {
       ans = ans + text;
       return ans;
     },
+    selectFile() {
+      let file = this.$refs.idx.files[0];
 
+      if (file) {
+          let reader = new FileReader();
+          reader.readAsText(file, "UTF-8");
+
+          reader.onload = function (event) {
+            this.index = lunr.Index.load(JSON.parse(event.target.result));
+          }
+
+          reader.onerror = function () {
+          };
+      }
+      // $(document).ready(function() {
+      //   $.getJSON("abstract-presenter-new/index.json", function(data) {
+      //     this.index = lunr.Index.load(JSON.parse(data))
+      //     console.log('here')
+      //   })
+      // })
+      // fs.readFile('index.json', function(err, data) {
+      //   if (!err) {
+      //     this.index = lunr.Index.load(JSON.parse(data));
+      //   }
+      // })
+    }
   },
   computed: {
     rules() {
@@ -320,12 +328,6 @@ export default {
       }
       this.awaitingSearch = true;
     },
-    finishLoading: function () {
-      if (this.finishLoading) {
-        this.buildIndex(this.detailedInfo);
-        this.finishLoading = false;
-      }
-    }
   }
 };
 </script>
